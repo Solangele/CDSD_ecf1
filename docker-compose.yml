@@ -1,15 +1,14 @@
-
 services:
   # Stockage objet S3-compatible
   minio:
     image: minio/minio:latest
     container_name: ecf-minio
     ports:
-      - "9000:9000"   # API
-      - "9001:9001"   # Console
+      - "9000:9000"   
+      - "9001:9001"   
     environment:
-      MINIO_ROOT_USER: $MINIO_ACCESS_KEY
-      MINIO_ROOT_PASSWORD: $MINIO_SECRET_KEY
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
@@ -28,8 +27,8 @@ services:
     ports:
       - "27017:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: $MONGO_USER
-      MONGO_INITDB_ROOT_PASSWORD: $MONGO_PASSWORD
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
       MONGO_INITDB_DATABASE: ecommerce_db
     volumes:
       - mongo_data:/data/db
@@ -48,8 +47,8 @@ services:
     ports:
       - "8081:8081"
     environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: $MONGO_USER
-      ME_CONFIG_MONGODB_ADMINPASSWORD: $MONGO_PASSWORD
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_USER}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASSWORD}
       ME_CONFIG_MONGODB_URL: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/
       ME_CONFIG_BASICAUTH: false
     depends_on:
@@ -58,7 +57,34 @@ services:
     networks:
       - tp-network
 
+  # Base de données relationnelle SQL
+  postgres:
+    image: postgres:16
+    container_name: ecf-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: datapulse_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - tp-network
+
+  # Interface web pour PostgreSQL
+  adminer:
+    image: adminer
+    container_name: ecf-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - tp-network
+
 volumes:
+  postgres_data:
   minio_data:
   mongo_data:
 

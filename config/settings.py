@@ -59,7 +59,21 @@ class ScraperConfig:
             )
         }
 
+@dataclass
+class PostgresConfig:
+    host: str = os.getenv("POSTGRES_HOST", "localhost")
+    port: int = int(os.getenv("POSTGRES_PORT", "5432"))
+    user: str = os.getenv("POSTGRES_USER")
+    password: str = os.getenv("POSTGRES_PASSWORD")
+    database: str = os.getenv("POSTGRES_DB", "datapulse_db")
 
+    @property
+    def connection_uri(self) -> str:
+        # Requis par SQLAlchemy (ExcelLoader)
+        return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
+
+
+postgres_config = PostgresConfig()
 minio_config = MinIOConfig()
 mongo_config = MongoDBConfig()
 scraper_config = ScraperConfig()

@@ -1,5 +1,6 @@
 import re
 import time
+from datetime import datetime
 from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
@@ -8,6 +9,7 @@ import structlog
 # On importe tes outils
 from src.storage.mongo_client import MongoDBStorage
 from src.storage.minio_client import MinIOStorage
+from src.storage.postgres_client import PostgresStorage
 from config.settings import scraper_config, minio_config
 
 logger = structlog.get_logger()
@@ -20,6 +22,7 @@ class EcommerceScraper:
         
         self.mongo = MongoDBStorage()
         self.minio = MinIOStorage()
+        self.pg = PostgresStorage()
 
     def run(self):
         logger.info("starting_ecommerce_scraping")
@@ -51,9 +54,20 @@ class EcommerceScraper:
                 if product_data:
                     if product_data["image_url"]:
                         self._handle_image(product_data)
+
+                    self.mongo.save_item("products", product_data)
                     
-                    if self.mongo.save_item("products", product_data):
-                        saved_count += 1
+                    sql_data = {
+                        "source": "WebScraper IO",
+                        "title": product_data["title"],
+                        "price_euro": product_data["price"],
+                        "rating": product_data["rating"],
+                        "category": product_data["category"],
+                        "minio_image_uri": product_data.get("minio_uri"),
+                        "scraped_at": datetime.now()
+                    }
+                    self.pg.upsert_product(sql_data)
+                    saved_count += 1
                 
                 time.sleep(self.delay)
             
