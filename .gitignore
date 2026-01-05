@@ -1,0 +1,9 @@
+# On ignore tous les dossiers __pycache__ récursivement
+**/__pycache__/*
+# On ignore les fichiers compilés
+*.pyc
+*.pyo
+__pycache__/*
+
+#ignorer le .env
+.env
