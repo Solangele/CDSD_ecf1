@@ -7,29 +7,35 @@ logger = structlog.get_logger()
 
 class ExcelLoader:
     def __init__(self):
-        self.engine = create_engine(postgres_config.connection_uri)
         self.file_path = "data/partenaire_librairies.xlsx"
-        self.engine = create_engine(postgres_config.connection_uri,isolation_level="AUTOCOMMIT")
+        self.engine = create_engine(postgres_config.connection_uri, isolation_level="AUTOCOMMIT")
 
     def load_and_clean(self):
         logger.info("starting_excel_import", file=self.file_path)
         
         try:
             df = pd.read_excel(self.file_path)
-            print(df.head())
+
+            required_cols = ['nom_librairie', 'adresse', 'code_postal', 'ville']
+            missing_cols = [c for c in required_cols if c not in df.columns]
             
+            if missing_cols:
+                logger.error("invalid_format", missing=missing_cols)
+                raise ValueError(f"Colonnes manquantes dans l'Excel : {missing_cols}")
+
             cols_to_remove = ['contact_nom', 'contact_email', 'contact_telephone']
+  
+            existing_cols_to_remove = [c for c in cols_to_remove if c in df.columns]
             
-            logger.info("applying_rgpd_measures", removed_columns=cols_to_remove)
-            df_cleaned = df.drop(columns=cols_to_remove)
-            
+            logger.info("applying_rgpd_measures", removed_columns=existing_cols_to_remove)
+            df_cleaned = df.drop(columns=existing_cols_to_remove)
 
             df_cleaned['code_postal'] = df_cleaned['code_postal'].astype(str).str.zfill(5)
-            
+
             df_cleaned.to_sql(
                 name='fact_libraries', 
                 con=self.engine, 
-                if_exists='append', 
+                if_exists='replace', 
                 index=False
             )
             

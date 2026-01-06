@@ -40,6 +40,8 @@ class PostgresStorage:
                 );
             """)
             
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_products_category ON dim_products(category);")
+
             # Table pour les librairies (Excel + API Adresse)
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS fact_libraries (
@@ -55,7 +57,10 @@ class PostgresStorage:
                     date_partenariat DATE
                 );
             """)
-            logger.info("postgres_tables_ready")
+
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_libraries_ville ON fact_libraries(ville);")
+            
+            logger.info("postgres_tables_and_indexes_ready")
 
     def upsert_product(self, data):
         query = """

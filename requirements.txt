@@ -1,28 +1,26 @@
-# Scraping
+# --- Scraping & API ---
 requests==2.31.0
 beautifulsoup4==4.12.3
-lxml
-fake-useragent==1.4.0
+lxml==5.1.0
 
-# Stockage
-minio==7.2.3
+# --- Stockage SQL (PostgreSQL) ---
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.27
+
+# --- Stockage NoSQL & S3 ---
 pymongo==4.6.1
+minio==7.2.3
 
-# Traitement de données
-pandas
-numpy
-pillow
+# --- Traitement de données ---
+pandas==2.2.0
+openpyxl==3.1.2
+pillow==10.2.0
 
-# Utilitaires
+# --- Utilitaires & Logs ---
 python-dotenv==1.0.1
-tenacity==8.2.3
 structlog==24.1.0
+tenacity==8.2.3
 tqdm==4.66.1
 
-# Tests
+# --- Tests & Qualité ---
 pytest==8.0.0
-
-# Notebooks
-jupyter==1.0.0
-matplotlib==3.8.3
-seaborn==0.13.2

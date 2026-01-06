@@ -69,7 +69,6 @@ class PostgresConfig:
 
     @property
     def connection_uri(self) -> str:
-        # Requis par SQLAlchemy (ExcelLoader)
         return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
 
 
