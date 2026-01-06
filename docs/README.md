@@ -27,46 +27,59 @@ Le directeur technique vous confie la mission suivante :
 # Partie 1 : Mise en place de l'infrastructure
 ## Arborescence du projet
 ```
-|   .env
+│   .env
 │   .gitignore
 │   docker-compose.yml
-│   ECF-DataPulse-MultiSources.md
 │   main.py
-│   README.md
 │   requirements.txt
+│
 ├───config
 │   │   settings.py
 │   │   __init__.py
+│   │
 │   └───__pycache__
 │           settings.cpython-314.pyc
 │           __init__.cpython-314.pyc
+│
 ├───data
 │       partenaire_librairies.xlsx
+│
+├───docs
+│       ECF-DataPulse-MultiSources.md
+│       README.md
+│       RGPD_conformite.md
+│
 ├───sql
 │       analyses.sql
+│
 ├───src
 │   │   pipeline.py
 │   │   __init__.py
+│   │
 │   ├───processors
 │   │   │   api_enricher.py
 │   │   │   excel_loader.py
+│   │   │
 │   │   └───__pycache__
 │   │           api.cpython-314.pyc
 │   │           api_enricher.cpython-314.pyc
 │   │           excel_loader.cpython-314.pyc
+│   │
 │   ├───scrapers
 │   │   │   ecom_scraper.py
 │   │   │   quotes_scraper.py
-│   │   │   __init__.py
+│   │   │
 │   │   └───__pycache__
 │   │           ecom_scraper.cpython-314.pyc
 │   │           quotes_scraper.cpython-314.pyc
 │   │           __init__.cpython-314.pyc
+│   │
 │   ├───storage
 │   │   │   minio_client.py
 │   │   │   mongo_client.py
 │   │   │   postgres_client.py
 │   │   │   __init__.py
+│   │   │
 │   │   └───__pycache__
 │   │           minio_client.cpython-314.pyc
 │   │           mongo_client.cpython-314.pyc
@@ -74,7 +87,9 @@ Le directeur technique vous confie la mission suivante :
 │   │           __init__.cpython-314.pyc
 │   │
 │   └───__pycache__
+│           pipeline.cpython-314.pyc
 │           __init__.cpython-314.pyc
+│
 └───tests
 ```
 
@@ -202,28 +217,40 @@ snake_case (tout en minuscules avec des underscores).
 
 ## 4.Modélisation des données 
 ### Modèle de données proposées
-Je propose un Schéma en Étoile simplifié. C'est le standard du Data Warehousing. Il sépare les données en deux types de tables :
+Je propose un Schéma en étoile simplifié. C'est le standard du Data Warehousing. Il sépare les données en deux types de tables :
 Table de Faits : Contient les événements ou les objets centraux (les librairies).
 Tables de Dimensions : Contiennent les attributs descriptifs (les produits).
 
 ### Description des tables
 2. Schéma Entité-Relation (ERD)
-Voici la représentation visuelle de tes tables dans PostgreSQL :
-fact_libraries (Table centrale) :
+Voici la représentation visuelle des tables dans PostgreSQL :
+fact_libraries_enriched :
 id (PK)
 nom_librairie
 adresse
+code_postal
+ville
+ca_annuel
 specialite
-latitude / longitude (Enrichis par l'API)
-scraped_at
+date_partenariat
 
-dim_products (Table de référence) :
-sku (PK)
+dim_geoloc :
+id (PK)
+library_id (FK)
+latitude
+longitude
+
+dim_products :
+id (PK)
+source
 title
 price_euro
 rating
-category / subcategory
+category 
 minio_image_uri (Lien vers le stockage objet)
+scraped_at
+
+
 
 ### Justification des choix
 Pourquoi un schéma en étoile ?
@@ -364,3 +391,7 @@ networks:
 # Partie 2 : Collecte des données
 Voir code et RGPD_conformite.md
 
+# Partie 3 : Pipeline ETL
+De 3.1 à 3.3 tout est exécuté dans le code. 
+
+## Requêtes analytiques

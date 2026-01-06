@@ -51,7 +51,7 @@ class ScraperConfig:
         self.sites = {
             "webscraper": SiteConfig(
                 name="WebScraper IO",
-                base_url="https://webscraper.io/test-sites/e-commerce/allinone"
+                base_url = "https://webscraper.io/"
             ),
             "autre_site": SiteConfig(
                 name="Partenaire Librairie",

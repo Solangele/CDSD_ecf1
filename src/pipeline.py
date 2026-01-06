@@ -3,13 +3,13 @@ from src.scrapers.quotes_scraper import QuotesScraper
 from src.scrapers.ecom_scraper import EcommerceScraper 
 from src.processors.excel_loader import ExcelLoader
 from src.processors.api_enricher import APIEnricher
+from src.storage.postgres_client import PostgresStorage
 
 logger = structlog.get_logger()
 
 class DataPipeline:
     def __init__(self):
-        # On ne les instancie que si nécessaire pour économiser les ressources
-        pass
+        self.pg = PostgresStorage()
 
     def run_excel(self):
         logger.info("step_1_excel_import")
@@ -17,12 +17,12 @@ class DataPipeline:
 
     def run_api(self):
         logger.info("step_2_api_enrichment")
-        APIEnricher().run()
+        APIEnricher(pg_storage=self.pg).run()
 
     def run_scraping(self):
         logger.info("step_scraping_all")
         QuotesScraper().run()
-        EcommerceScraper().run()
+        EcommerceScraper(pg_storage=self.pg).run()
 
     def run_all(self):
         logger.info("global_pipeline_started")

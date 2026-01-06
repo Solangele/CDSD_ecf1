@@ -16,7 +16,7 @@ class PostgresStorage:
                 password=postgres_config.password,
                 database=postgres_config.database
             )
-            self.conn.autocommit = True
+            self.conn.autocommit = False
             self._ensure_tables()
             logger.info("postgres_connection_success")
         except Exception as e:
@@ -25,8 +25,7 @@ class PostgresStorage:
 
     def _ensure_tables(self):
         with self.conn.cursor() as cur:
-            #cur.execute("DROP TABLE IF EXISTS fact_libraries CASCADE;")
-            # Table pour les produits (Webscraper + Books)
+            # Table Produits (inchangée)
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS dim_products (
                     id SERIAL PRIMARY KEY,
@@ -39,28 +38,53 @@ class PostgresStorage:
                     scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
             """)
-            
-            cur.execute("CREATE INDEX IF NOT EXISTS idx_products_category ON dim_products(category);")
-
-            # Table pour les librairies (Excel + API Adresse)
+        self.conn.commit()
+            # ON CHANGE LE NOM : fact_libraries_enriched
+        with self.conn.cursor() as cur:
             cur.execute("""
-                CREATE TABLE IF NOT EXISTS fact_libraries (
+                CREATE TABLE IF NOT EXISTS fact_libraries_enriched (
                     id SERIAL PRIMARY KEY,
-                    nom_librairie VARCHAR(255),
+                    nom_librairie TEXT,
                     adresse TEXT,
-                    code_postal VARCHAR(10),
-                    ville VARCHAR(100),
-                    specialite VARCHAR(100),
-                    latitude FLOAT,
-                    longitude FLOAT,
-                    ca_annuel DECIMAL(15,2),
-                    date_partenariat DATE
+                    code_postal TEXT,
+                    ville TEXT,
+                    ca_annuel FLOAT,
+                    date_partenariat DATE,
+                    specialite TEXT
+                );
+
+                CREATE TABLE IF NOT EXISTS dim_geoloc (
+                    id SERIAL PRIMARY KEY,
+                    library_id INTEGER UNIQUE NOT NULL, -- Plus de REFERENCES ici pour éviter le bug
+                    latitude DOUBLE PRECISION,
+                    longitude DOUBLE PRECISION
                 );
             """)
+        self.conn.commit()
 
-            cur.execute("CREATE INDEX IF NOT EXISTS idx_libraries_ville ON fact_libraries(ville);")
-            
-            logger.info("postgres_tables_and_indexes_ready")
+
+    def save_geoloc(self, lib_id, lat, lon):
+        query = """
+            INSERT INTO dim_geoloc (library_id, latitude, longitude)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (library_id) DO UPDATE 
+            SET latitude = EXCLUDED.latitude, longitude = EXCLUDED.longitude;
+        """
+        with self.conn.cursor() as cur:
+            cur.execute(query, (lib_id, lat, lon))
+        self.conn.commit()
+    
+    def get_libraries_to_enrich(self):
+        """Retourne les libs qui n'ont pas encore de géoloc dans dim_geoloc"""
+        query = """
+            SELECT l.id, l.adresse, l.ville, l.code_postal 
+            FROM fact_libraries_enriched l
+            LEFT JOIN dim_geoloc g ON l.id = g.library_id
+            WHERE g.id IS NULL;
+        """
+        with self.conn.cursor() as cur:
+            cur.execute(query)
+            return cur.fetchall()
 
     def upsert_product(self, data):
         query = """
@@ -74,8 +98,10 @@ class PostgresStorage:
         try:
             with self.conn.cursor() as cur:
                 cur.execute(query, data)
+            self.conn.commit() 
         except Exception as e:
             logger.error("postgres_upsert_failed", error=str(e))
+            self.conn.rollback()
 
     def close(self):
         if self.conn:

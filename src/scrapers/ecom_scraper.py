@@ -14,32 +14,40 @@ from config.settings import scraper_config, minio_config
 logger = structlog.get_logger()
 
 class EcommerceScraper:
-    def __init__(self):
+    def __init__(self, pg_storage=None):
         site_cfg = scraper_config.sites["webscraper"]
         self.base_url = site_cfg.base_url
         self.delay = max(1.0, site_cfg.delay) 
         self.headers = {
-            'User-Agent': 'DataPulse-Ecom-Bot/1.0 (ECF Student Project)'
+            'User-Agent': 'DataPulse-Enricher-Student-Project/1.0'
         }
         
         self.mongo = MongoDBStorage()
         self.minio = MinIOStorage()
-        self.pg = PostgresStorage()
+        
+        # 2. Utilise la connexion partagée ou crée-en une nouvelle
+        self.pg = pg_storage or PostgresStorage()
 
     def run(self):
         logger.info("starting_ecommerce_scraping")
         
-        target_urls = [
-            ("Computers", "Laptops", f"{self.base_url}/test-sites/e-commerce/allinone/computers/laptops"),
-            ("Phones", "Touch", f"{self.base_url}/test-sites/e-commerce/allinone/phones/touch")
+        logger.info("starting_ecommerce_scraping")
+        
+        # On définit seulement les chemins relatifs
+        paths = [
+            ("Computers", "Laptops", "test-sites/e-commerce/allinone/computers/laptops"),
+            ("Phones", "Touch", "test-sites/e-commerce/allinone/phones/touch")
         ]
         
         total_saved = 0
-        for cat, subcat, url in target_urls:
-            total_saved += self.scrape_category(url, cat, subcat)
+        for cat, subcat, path in paths:
+            # urljoin gère intelligemment la fusion entre le domaine et le chemin
+            full_url = urljoin(self.base_url, path)
+            total_saved += self.scrape_category(full_url, cat, subcat)
 
         self.mongo.log_run("ecommerce_scraper", total_saved)
         logger.info("ecommerce_scraping_finished", total=total_saved)
+        
 
     def scrape_category(self, url, category, subcategory):
         current_url = url
@@ -58,7 +66,7 @@ class EcommerceScraper:
                     product_data = self._parse_product(elem, category, subcategory)
                     
                     if product_data:
-                        # self._handle_image(product_data)
+                        self._handle_image(product_data)
                         self.mongo.save_item("products", product_data)
                         
                         sql_data = {
@@ -67,7 +75,7 @@ class EcommerceScraper:
                             "price_euro": product_data["price"],
                             "rating": product_data["rating"],
                             "category": product_data["category"],
-                            "minio_image_uri": product_data.get("minio_uri"),
+                            "minio_image_uri": product_data.get("minio_image_uri"),
                             "scraped_at": datetime.now()
                         }
                         self.pg.upsert_product(sql_data)
@@ -115,7 +123,7 @@ class EcommerceScraper:
                     data=img_res.content,
                     content_type="image/jpeg"
                 )
-                product_data["minio_uri"] = minio_uri
+                product_data["minio_image_uri"] = minio_uri
         except Exception as e:
             logger.error("image_storage_failed", error=str(e))
 

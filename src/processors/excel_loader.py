@@ -32,12 +32,19 @@ class ExcelLoader:
 
             df_cleaned['code_postal'] = df_cleaned['code_postal'].astype(str).str.zfill(5)
 
+            df_cleaned = df_cleaned.reset_index(drop=True)
+
+            with self.engine.connect() as conn:
+                conn.execute("TRUNCATE TABLE fact_libraries_enriched CASCADE;")
+
+
             df_cleaned.to_sql(
-                name='fact_libraries', 
+                name='fact_libraries_enriched', 
                 con=self.engine, 
-                if_exists='replace', 
-                index=False
+                if_exists='append', 
+                index=False 
             )
+            
             
             logger.info("excel_import_success", rows=len(df_cleaned))
             return df_cleaned
