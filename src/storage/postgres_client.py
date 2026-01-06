@@ -1,5 +1,4 @@
 import psycopg2
-from psycopg2.extras import RealDictCursor
 import structlog
 from config.settings import postgres_config
 
@@ -7,7 +6,6 @@ logger = structlog.get_logger()
 
 class PostgresStorage:
     def __init__(self):
-        # Connexion à la base de données
         try:
             self.conn = psycopg2.connect(
                 host=postgres_config.host,
@@ -25,7 +23,6 @@ class PostgresStorage:
 
     def _ensure_tables(self):
         with self.conn.cursor() as cur:
-            # Table Produits (inchangée)
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS dim_products (
                     id SERIAL PRIMARY KEY,
@@ -39,7 +36,6 @@ class PostgresStorage:
                 );
             """)
         self.conn.commit()
-            # ON CHANGE LE NOM : fact_libraries_enriched
         with self.conn.cursor() as cur:
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS fact_libraries_enriched (

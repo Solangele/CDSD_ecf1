@@ -9,14 +9,12 @@ Le directeur technique vous confie la mission suivante :
 
 ## Prérequis
 ### Environnement techniques
-
 - Docker et docker compose
 - Python 3.14
 - Vscode 
 - Connexion internet
 
 ### Connaissances requises
-
 - Bases de python
 - Notion HTML et HTTP
 - Docker
@@ -52,45 +50,44 @@ Le directeur technique vous confie la mission suivante :
 ├───sql
 │       analyses.sql
 │
-├───src
-│   │   pipeline.py
-│   │   __init__.py
-│   │
-│   ├───processors
-│   │   │   api_enricher.py
-│   │   │   excel_loader.py
-│   │   │
-│   │   └───__pycache__
-│   │           api.cpython-314.pyc
-│   │           api_enricher.cpython-314.pyc
-│   │           excel_loader.cpython-314.pyc
-│   │
-│   ├───scrapers
-│   │   │   ecom_scraper.py
-│   │   │   quotes_scraper.py
-│   │   │
-│   │   └───__pycache__
-│   │           ecom_scraper.cpython-314.pyc
-│   │           quotes_scraper.cpython-314.pyc
-│   │           __init__.cpython-314.pyc
-│   │
-│   ├───storage
-│   │   │   minio_client.py
-│   │   │   mongo_client.py
-│   │   │   postgres_client.py
-│   │   │   __init__.py
-│   │   │
-│   │   └───__pycache__
-│   │           minio_client.cpython-314.pyc
-│   │           mongo_client.cpython-314.pyc
-│   │           postgres_client.cpython-314.pyc
-│   │           __init__.cpython-314.pyc
-│   │
-│   └───__pycache__
-│           pipeline.cpython-314.pyc
-│           __init__.cpython-314.pyc
-│
-└───tests
+└───src
+    │   pipeline.py
+    │   __init__.py
+    │
+    ├───processors
+    │   │   api_enricher.py
+    │   │   excel_loader.py
+    │   │
+    │   └───__pycache__
+    │           api.cpython-314.pyc
+    │           api_enricher.cpython-314.pyc
+    │           excel_loader.cpython-314.pyc
+    │
+    ├───scrapers
+    │   │   ecom_scraper.py
+    │   │   quotes_scraper.py
+    │   │
+    │   └───__pycache__
+    │           ecom_scraper.cpython-314.pyc
+    │           quotes_scraper.cpython-314.pyc
+    │           __init__.cpython-314.pyc
+    │
+    ├───storage
+    │   │   minio_client.py
+    │   │   mongo_client.py
+    │   │   postgres_client.py
+    │   │   __init__.py
+    │   │
+    │   └───__pycache__
+    │           minio_client.cpython-314.pyc
+    │           mongo_client.cpython-314.pyc
+    │           postgres_client.cpython-314.pyc
+    │           __init__.cpython-314.pyc
+    │
+    └───__pycache__
+            pipeline.cpython-314.pyc
+            __init__.cpython-314.pyc
+            
 ```
 
 
@@ -146,7 +143,7 @@ Le Data Lake / NoSQL (MongoDB & MinIO) : Pour les données semi-structurées (Ci
 
 ### Pourquoi ce choix ? 
 Honnêtement, j'ai fais mon projet petit à petit, donc je n'ai pas choisis au départ, c'est une fois le projet en partie terminée que je me suis aperçue du rendu. 
-Mais finalement, si j'avais tout mis dans PostgreSQL, le stockage des images aurait saturé la base de données et ralenti les performances. 
+Mais finalement, si j'avais utilisé uniquement PostgreSQL, le stockage des images aurait saturé la base de données et ralenti les performances. 
 
 Donc l'hybride me permet d'utiliser "le bon outil pour la bonne donnée" :
 SQL pour la cohérence et les calculs.
@@ -164,6 +161,7 @@ Sécurité des données : Les données critiques (prix, adresses) sont protégé
 Inconvénients 
 Complexité de maintenance : Il faut gérer trois technologies différentes (Postgres, Mongo, MinIO) au lieu d'une seule.
 Consistance des données : Si un produit est supprimé, il faut penser à le supprimer dans SQL, Mongo et MinIO.
+Quand j'ai voulu séparer une table en 2, j'ai perdu 3 heures parce que j'avais oublié de modifier des choses dans certains fichier et du coup plus rien ne fonctionnait.
 
 
 ## 2.Choix des technologies
@@ -192,7 +190,6 @@ Comparaison : Faire des calculs complexes ou des jointures dans MongoDB est beau
 ## 3.Organisation des données
 ### Comment les données sont-elles organisées dans l'architecture ?
 J'organise les données selon une approche multicouche et multi-format pour séparer les responsabilités :
-
 Organisation par Format :
 Relationnel (PostgreSQL) : Les données structurées et nettoyées (Librairies, Produits).
 Documentaire (MongoDB) : Les données semi-structurées ou changeantes (Citations, Métadonnées brutes).
@@ -201,11 +198,11 @@ Objets (MinIO) : Les fichiers binaires volumineux (Images JPG).
 Organisation par Schéma : J'utilise un modèle en étoile simplifié dans PostgreSQL, avec des tables de faits (fact_libraries) et des tables de dimensions (dim_products).
 
 ### Quelles sont les couches de transformation et pourquoi ? 
-Oui, j'adopte une architecture vue en cours qui est Bronze/Silver/Gold:
+J'adopte une architecture vue en cours qui est Bronze/Silver/Gold:
 Couche Bronze (données brutes) : C'est le stockage des données brutes telles qu'elles arrivent (HTML des scrapers, JSON brut dans MongoDB, Excel original).
 Pourquoi ? Pour pouvoir relancer le traitement sans rescraper si une erreur survient.
 
-Couche Silver (données nettoyées et enrichies) : Les données sont nettoyées par Pandas et enrichies par l'API Geo. C'est ici que l'on normalise les formats de prix et qu'on ajoute les coordonnées GPS.
+Couche Silver (données nettoyées et enrichies) : Les données sont nettoyées par Pandas et enrichies par l'API Geo. C'est ici que se normalisent les formats de prix et que s'ajoutent les coordonnées GPS.
 Pourquoi ? Pour garantir que les données sont prêtes à l'analyse.
 
 Couche Gold (prête à l'utilisation) : Ce sont les tables finales dans PostgreSQL et les exports CSV/Parquet prêts pour le reporting.
@@ -254,13 +251,7 @@ scraped_at
 
 ### Justification des choix
 Pourquoi un schéma en étoile ?
-Simplicité des requêtes : Pour un analyste, il est très facile de faire un SELECT sur les librairies et de filtrer par spécialité ou localisation sans faire des jointures infinies.
-
-Performance : Ce modèle est optimisé pour la lecture et l'agrégation de données (ex: calculer la moyenne des prix par catégorie).
-
-Pourquoi l'utilisation de clés primaires (PK) et de types stricts ?
-Intégrité : En utilisant le SKU ou un ID unique, j'empêche les doublons lors des mises à jour (méthode upsert).
-Typage : Stocker le prix en FLOAT et les coordonnées en DECIMAL permet de faire des calculs mathématiques directs en SQL, ce qui serait impossible avec du texte brut.
+Simplicité des requêtes : Pour un analyste, il est très facile de faire un SELECT sur les librairies et de filtrer par spécialité ou localisation sans faire des jointures infinies. De plus, un data analyste utilise normalement un outil (comme Power BI), qui fonctionne avec un modèle en étoile ou en flocon. 
 
 Pourquoi avoir séparé les images du modèle relationnel ?
 Le modèle relationnel ne stocke que la référence (le chemin MinIO). Cela respecte le principe de séparation du stockage : la base de données reste légère et rapide, tandis que les fichiers lourds sont gérés par un système dédié au stockage d'objets.
@@ -272,7 +263,7 @@ Source Excel (Librairies) : les données contact_nom et contact_mail ainsi que l
 Dans le projet : les identifiants et mots de passes des différentes interfaces
 
 ### Mesures de protection
-Excel : Ces données sont toujours dans le CSV mais sont supprimées dans la base de données. Concernant le chiffre d'affaire annuel, il apparaît, mais il est essentiel de limiter l'accès aux données aux personnes habilitées uniquement. 
+Excel : Ces données sont toujours dans le CSV mais sont supprimées dans la base de données. Concernant le chiffre d'affaire annuel, il apparaît, mais il est essentiel, dans ce cas de limiter l'accès aux données. Il faudra bloquer l'accès à la table pour les personnes qui n'y travaillent pas et qui n'ont pas à y avoir accès. 
 Le projet : création d'un fichier .env contenant tous les identifiants et les mots de passe. Ce fichier est dans le .gitignore afin qu'il reste privé. 
 
 ### Le droit à l'effacement
@@ -389,9 +380,96 @@ networks:
 
 
 # Partie 2 : Collecte des données
-Voir code et RGPD_conformite.md
+## scrapers Web
+Voir src / scrapers
+
+
+## Client API
+Voir src / processors / api_enricher.py
+
+## Import fichier excel
+Voir src / processors / excel_loader.py
+
+## Documentation RGPD
+Voir docs / RGPD_conformite.md
 
 # Partie 3 : Pipeline ETL
-De 3.1 à 3.3 tout est exécuté dans le code. 
+## Transformations 
+Voir : 
+src/scrapers/ecom_scraper.py : _parse_product
+src/processors/excel_loader.py : load_and_clean
+src/storage/postgres_client.py : upsert_product
+src/processors/api_enricher.py : run
+src/scrapers/quotes_scraper.py
+
+## Chargement 
+Voir : 
+src/storage/postgres_client.py : _ensure_tables
+src/processors/excel_loader.py et api_enricher.py
+
+## Orchestration
+Voir : 
+src/pipeline.py
+main.py
 
 ## Requêtes analytiques
+``` sql
+-- 1. Requête d'agrégation simple
+-- Objectif : Calculer le CA total et moyen par spécialité de librairie
+SELECT 
+    specialite,
+    COUNT(*) as nombre_librairies,
+    ROUND(SUM(ca_annuel)::numeric, 2) as ca_total,
+    ROUND(AVG(ca_annuel)::numeric, 2) as ca_moyen
+FROM fact_libraries_enriched
+GROUP BY specialite
+ORDER BY ca_total DESC;
+
+
+-- 2. Requête avec jointure
+-- Objectif : Lister les librairies avec leur position GPS exacte
+SELECT 
+    l.nom_librairie,
+    l.ville,
+    l.specialite,
+    g.latitude,
+    g.longitude
+FROM fact_libraries_enriched l
+INNER JOIN dim_geoloc g ON l.id = g.library_id
+ORDER BY l.ville;
+
+
+-- 3. Requête avec fonction de fenêtrage (Window Function)
+-- Objectif : Calculer le rang de chaque librairie par CA au sein de sa propre ville
+SELECT 
+    nom_librairie,
+    ville,
+    ca_annuel,
+    RANK() OVER(PARTITION BY ville ORDER BY ca_annuel DESC) as rang_ca_par_ville
+FROM fact_libraries_enriched;
+
+
+-- 4. Requête de classement (Top N)
+-- Objectif : Identifier les 5 produits les mieux notés du catalogue e-commerce
+SELECT 
+    title,
+    category,
+    price_euro,
+    rating
+FROM dim_products
+WHERE rating IS NOT NULL
+ORDER BY rating DESC, price_euro ASC
+LIMIT 5;
+
+
+-- 5. Requête croisant au moins 2 sources de données
+-- Objectif : Comparer le CA des librairies avec le prix moyen des produits scrapés
+SELECT 
+    l.specialite as categorie_librairie,
+    ROUND(AVG(l.ca_annuel)::numeric, 2) as ca_moyen_librairies,
+    (SELECT ROUND(AVG(price_euro), 2) FROM dim_products) as prix_moyen_catalogue_global
+FROM fact_libraries_enriched l
+GROUP BY l.specialite;
+```
+
+

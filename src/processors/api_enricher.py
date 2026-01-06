@@ -15,7 +15,6 @@ class APIEnricher:
     def run(self):
         logger.info("starting_api_enrichment")
         
-        # On cherche les librairies qui n'ont pas encore d'entrée dans dim_geoloc
         query = """
             SELECT l.id, l.adresse, l.ville, l.code_postal 
             FROM fact_libraries_enriched l
@@ -50,7 +49,6 @@ class APIEnricher:
                 data = response.json()
                 if data['features']:
                     lon, lat = data['features'][0]['geometry']['coordinates']
-                    # On appelle la méthode de sauvegarde vers dim_geoloc
                     self.pg.save_geoloc(lib_id, lat, lon) 
                     logger.info("enrichment_success", id=lib_id, lat=lat, lon=lon)
                 

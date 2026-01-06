@@ -1,5 +1,4 @@
 import io
-from datetime import timedelta
 from minio import Minio
 import structlog
 
@@ -62,6 +61,5 @@ class MinIOStorage:
 
 if __name__ == "__main__":
     storage = MinIOStorage()
-    # Test simple
     storage.upload_file(minio_config.bucket_exports, "test_simple.txt", b"Hello World")
     print("Test MinIO OK - Stats:", storage.get_stats())

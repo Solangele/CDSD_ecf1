@@ -25,7 +25,6 @@ class EcommerceScraper:
         self.mongo = MongoDBStorage()
         self.minio = MinIOStorage()
         
-        # 2. Utilise la connexion partagée ou crée-en une nouvelle
         self.pg = pg_storage or PostgresStorage()
 
     def run(self):
@@ -33,7 +32,6 @@ class EcommerceScraper:
         
         logger.info("starting_ecommerce_scraping")
         
-        # On définit seulement les chemins relatifs
         paths = [
             ("Computers", "Laptops", "test-sites/e-commerce/allinone/computers/laptops"),
             ("Phones", "Touch", "test-sites/e-commerce/allinone/phones/touch")
@@ -41,7 +39,6 @@ class EcommerceScraper:
         
         total_saved = 0
         for cat, subcat, path in paths:
-            # urljoin gère intelligemment la fusion entre le domaine et le chemin
             full_url = urljoin(self.base_url, path)
             total_saved += self.scrape_category(full_url, cat, subcat)
 

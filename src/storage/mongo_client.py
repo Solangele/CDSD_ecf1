@@ -1,5 +1,5 @@
 import structlog
-from pymongo import MongoClient, ASCENDING, DESCENDING
+from pymongo import MongoClient, ASCENDING
 from datetime import datetime, timezone
 from typing import List, Dict
 
