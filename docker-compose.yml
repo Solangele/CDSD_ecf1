@@ -73,13 +73,18 @@ services:
       - tp-network
 
   # Interface web pour PostgreSQL
-  adminer:
-    image: adminer
-    container_name: ecf-adminer
-    ports:
-      - "8080:8080"
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: ecf-pgadmin
     depends_on:
       - postgres
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
     networks:
       - tp-network
 
@@ -87,6 +92,7 @@ volumes:
   postgres_data:
   minio_data:
   mongo_data:
+  pgadmin_data:
 
 networks:
   tp-network:

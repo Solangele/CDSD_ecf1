@@ -52,8 +52,8 @@ class EcommerceScraper:
                 product_data = self._parse_product(elem, category, subcategory)
                 
                 if product_data:
-                    if product_data["image_url"]:
-                        self._handle_image(product_data)
+                    # if product_data["image_url"]:
+                    #     self._handle_image(product_data)
 
                     self.mongo.save_item("products", product_data)
                     
@@ -77,7 +77,6 @@ class EcommerceScraper:
             return 0
 
     def _parse_product(self, elem, category, subcategory):
-        """Extrait les données d'un seul bloc produit."""
         try:
             title_elem = elem.find("a", class_="title")
             data = {

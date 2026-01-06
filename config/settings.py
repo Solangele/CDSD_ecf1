@@ -38,7 +38,7 @@ class MongoDBConfig:
 class SiteConfig:
     name: str
     base_url: str
-    delay: float = 1.0
+    delay: float = 0.1
     max_pages: int = 10
 
 @dataclass

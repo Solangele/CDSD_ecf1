@@ -25,6 +25,7 @@ class PostgresStorage:
 
     def _ensure_tables(self):
         with self.conn.cursor() as cur:
+            #cur.execute("DROP TABLE IF EXISTS fact_libraries CASCADE;")
             # Table pour les produits (Webscraper + Books)
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS dim_products (
@@ -50,7 +51,8 @@ class PostgresStorage:
                     specialite VARCHAR(100),
                     latitude FLOAT,
                     longitude FLOAT,
-                    ca_annuel DECIMAL(15,2)
+                    ca_annuel DECIMAL(15,2),
+                    date_partenariat DATE
                 );
             """)
             logger.info("postgres_tables_ready")
